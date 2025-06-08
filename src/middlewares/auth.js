@@ -1,0 +1,83 @@
+const responseLib = require('../libs/responseLib');
+const token = require('../libs/tokenLib');
+const check = require('../libs/checkLib');
+const appConfig = require('../../config/appConfig');
+
+
+
+
+
+let isAuthorized = async(req, res, next) => {
+  
+  try{
+    if (req.header('Authorization') && !check.isEmpty(req.header('Authorization'))) {
+        let auth = req.header('Authorization');
+        console.log("Authentication",auth);
+        const actual_token = auth.split(" ")[1];
+        //console.log('============>>', actual_token)
+
+        let dataDecod = await token.verifyClaimWithoutSecret(actual_token);
+        console.log('++', dataDecod);
+        req.user=dataDecod.data;
+        console.log("<============Requesting from User=================>",req.user);
+        next();
+        
+        
+        
+    } else {
+        let apiResponse = responseLib.generate(1, 'Authorization Token Is Missing In Request', req.headers)
+        res.status(403).send(apiResponse);
+    }
+  }
+  catch(err){
+        let apiResponse = responseLib.generate(true,err.message,null);
+        res.status(403)
+        res.send(apiResponse)
+      }
+}
+
+
+
+
+
+let firebaseAuth = async (req,res,next) => {
+  if (req.header('token') && !check.isEmpty(req.header('token'))) {
+    try{
+      let checkAuth = await appConfig.admin.auth().verifyIdToken(req.header('token'));
+      next();
+    }catch(err){
+      let apiResponse = responseLib.generate(0, `${err.message}`, null)
+      res.status(401).send(apiResponse)
+    }
+  } else {
+    let apiResponse = responseLib.generate(0, 'AuthorizationToken Is Missing In Request', null)
+    res.status(401).send(apiResponse)
+  }
+}
+
+let isAuthorizedSocket = async (socket,next) => {
+  try {
+    let socketToken;
+   //console.log("JWT token,", socket.handshake);
+    if (socket.handshake.headers.auth_token || socket.handshake.query.auth_token) {
+        socketToken = socket.handshake.headers.auth_token || socket.handshake.query.auth_token;
+    }
+
+    const decoded = await token.verifyClaimWithoutSecret(socketToken);
+
+    if (!decoded) {
+        console.log("Invalid token");
+    }
+    socket.user = decoded.data
+
+    next();
+} catch (err) {
+    console.log('ERROR => ' + err);
+}
+}
+
+module.exports = {
+  isAuthorized: isAuthorized,
+  firebaseAuth:firebaseAuth,
+  isAuthorizedSocket:isAuthorizedSocket
+}

@@ -3,7 +3,7 @@ const cors = require('cors');
 if (envConf.error) {
   throw envConf.error
 }
- 
+
 const express = require('express');
 const database = require('./www/db/db');
 const serverClusetrPool = require('./www/rest/server')
