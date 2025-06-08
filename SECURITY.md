@@ -7,7 +7,7 @@ Instead, report it directly to me so I can review and fix it responsibly.
 
 ### ✅ How to Report
 
-- Send an email to: **[your-email@example.com]**
+- Send an email to: **[kolaysayan544@gmail.com]**
 - Include a detailed description of the vulnerability
 - Add steps to reproduce the issue (if possible)
 
